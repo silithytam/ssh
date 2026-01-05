@@ -1,5 +1,4 @@
-
-name: CI
+ name: CI
 
 on: [push, workflow_dispatch]
 
@@ -13,6 +12,7 @@ jobs:
       run: |
         wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
         tar xvzf ngrok-v3-stable-linux-amd64.tgz
+        chmod +x ngrok
     
     - name: Auth ngrok
       run: ./ngrok authtoken 2baVR4YQ0Dy9Ilr8TUhQhQiSost_3jWMbnXzdFJf7M5S61iRa
@@ -20,7 +20,7 @@ jobs:
     - name: Setup SSH
       run: |
         sudo apt-get update
-        sudo apt-get install -y openssh-server
+        sudo apt-get install -y openssh-server jq
         sudo systemctl start ssh
         sudo systemctl enable ssh
     
@@ -28,13 +28,24 @@ jobs:
       run: |
         echo "runner:P@ssw0rd!" | sudo chpasswd
     
-    - name: Start ngrok
+    - name: Start ngrok and display URL
       run: |
-        ./ngrok tcp 22 > ngrok.log 2>&1 &
+        ./ngrok tcp 22 > /dev/null &
         sleep 10
-        cat ngrok.log
+        
+        NGROK_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+        NGROK_HOST=$(echo $NGROK_URL | sed 's|tcp://||' | cut -d':' -f1)
+        NGROK_PORT=$(echo $NGROK_URL | sed 's|tcp://||' | cut -d':' -f2)
+        
         echo "=========================================="
+        echo "SSH Connection Info:"
+        echo "Host: $NGROK_HOST"
+        echo "Port: $NGROK_PORT"
         echo "Username: runner"
         echo "Password: P@ssw0rd!"
+        echo ""
+        echo "Command:"
+        echo "ssh runner@$NGROK_HOST -p $NGROK_PORT"
         echo "=========================================="
-        tail -f ngrok.log
+        
+        sleep 6h
