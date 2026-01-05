@@ -14,7 +14,9 @@ jobs:
         tar xvzf ngrok-v3-stable-linux-amd64.tgz
     
     - name: Auth ngrok
-      run: ./ngrok authtoken 2baVR4YQ0Dy9Ilr8TUhQhQiSost_3jWMbnXzdFJf7M5S61iRa
+      run: ./ngrok authtoken $NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
     
     - name: Setup SSH
       run: |
@@ -27,5 +29,13 @@ jobs:
       run: |
         echo "runner:P@ssw0rd!" | sudo chpasswd
     
-    - name: Create ngrok Tunnel
-      run: ./ngrok tcp 22
+    - name: Start ngrok
+      run: |
+        ./ngrok tcp 22 > ngrok.log 2>&1 &
+        sleep 10
+        cat ngrok.log
+        echo "=========================================="
+        echo "Username: runner"
+        echo "Password: P@ssw0rd!"
+        echo "=========================================="
+        tail -f ngrok.log
