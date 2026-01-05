@@ -1,3 +1,4 @@
+
 name: CI
 
 on: [push, workflow_dispatch]
@@ -14,9 +15,7 @@ jobs:
         tar xvzf ngrok-v3-stable-linux-amd64.tgz
     
     - name: Auth ngrok
-      run: ./ngrok authtoken $NGROK_AUTH_TOKEN
-      env:
-        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      run: ./ngrok authtoken 2baVR4YQ0Dy9Ilr8TUhQhQiSost_3jWMbnXzdFJf7M5S61iRa
     
     - name: Setup SSH
       run: |
