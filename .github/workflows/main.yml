@@ -24,9 +24,15 @@ jobs:
         sudo systemctl start ssh
         sudo systemctl enable ssh
     
-    - name: Set User Password
+    - name: Configure SSH for root without password
       run: |
-        echo "runner:P@ssw0rd!" | sudo chpasswd
+        sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+        sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+        sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+        sudo sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config
+        echo "PermitEmptyPasswords yes" | sudo tee -a /etc/ssh/sshd_config
+        sudo passwd -d root
+        sudo systemctl restart ssh
     
     - name: Start ngrok and display URL
       run: |
@@ -38,14 +44,13 @@ jobs:
         NGROK_PORT=$(echo $NGROK_URL | sed 's|tcp://||' | cut -d':' -f2)
         
         echo "=========================================="
-        echo "SSH Connection Info:"
+        echo "SSH Connection Info (NO PASSWORD NEEDED):"
         echo "Host: $NGROK_HOST"
         echo "Port: $NGROK_PORT"
-        echo "Username: runner"
-        echo "Password: P@ssw0rd!"
+        echo "Username: root"
         echo ""
         echo "Command:"
-        echo "ssh runner@$NGROK_HOST -p $NGROK_PORT"
+        echo "ssh root@$NGROK_HOST -p $NGROK_PORT"
         echo "=========================================="
         
         sleep 6h
