@@ -36,25 +36,28 @@ jobs:
     - name: Install Chrome Remote Desktop
       run: |
         wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-        sudo apt-get install -y ./chrome-remote-desktop_current_amd64.deb
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./chrome-remote-desktop_current_amd64.deb
         rm chrome-remote-desktop_current_amd64.deb
     
     - name: Configure Chrome Remote Desktop
       run: |
-        sudo usermod -a -G chrome-remote-desktop runner
+        sudo systemctl status chrome-remote-desktop || true
+        if getent group chrome-remote-desktop > /dev/null 2>&1; then
+          sudo usermod -a -G chrome-remote-desktop runner
+        fi
         echo "export CHROME_REMOTE_DESKTOP_DEFAULT_DESKTOP_SIZES=1920x1080" >> ~/.profile
+        mkdir -p ~/.config/chrome-remote-desktop
         bash -c 'echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > ~/.chrome-remote-desktop-session'
-        sudo systemctl disable lightdm.service || true
+        sudo systemctl disable lightdm.service 2>/dev/null || true
     
-    - name: Setup XRDP (Fallback)
+    - name: Setup XRDP
       run: |
         sudo apt-get install -y xrdp
-        sudo systemctl start xrdp
-        sudo systemctl enable xrdp
         sudo adduser xrdp ssl-cert
         echo "xfce4-session" > ~/.xsession
         sudo sed -i 's/^new_cursors=true/new_cursors=false/g' /etc/xrdp/xrdp.ini
         sudo systemctl restart xrdp
+        sudo systemctl enable xrdp
     
     - name: Set User Password
       run: |
@@ -76,18 +79,22 @@ jobs:
         echo "Username: runner"
         echo "Password: P@ssw0rd!"
         echo ""
-        echo "=== Chrome Remote Desktop Setup ==="
-        echo "1. Connect via RDP first using info above"
-        echo "2. Open Chrome browser in RDP session"
-        echo "3. Go to: remotedesktop.google.com/headless"
-        echo "4. Click 'Begin' and 'Next'"
-        echo "5. Copy the Debian Linux command"
-        echo "6. Run it in terminal to get PIN setup"
+        echo "=== Installed Software ==="
+        echo "- Google Chrome"
+        echo "- Chrome Remote Desktop (installed)"
+        echo "- Firefox"
+        echo "- Xfce4 Desktop"
         echo ""
-        echo "=== RDP Connection Commands ==="
-        echo "Windows: Use Remote Desktop Connection"
-        echo "Linux: xfreerdp /v:$NGROK_HOST:$NGROK_PORT /u:runner /p:P@ssw0rd!"
-        echo "Mac: Use Microsoft Remote Desktop"
+        echo "=== Chrome Remote Desktop Setup ==="
+        echo "1. Connect via RDP using info above"
+        echo "2. Open Chrome browser"
+        echo "3. Visit: remotedesktop.google.com/headless"
+        echo "4. Follow setup instructions"
+        echo ""
+        echo "=== Connection Commands ==="
+        echo "Windows RDP: Use Remote Desktop Connection"
+        echo "Linux RDP: xfreerdp /v:$NGROK_HOST:$NGROK_PORT /u:runner /p:P@ssw0rd!"
+        echo "Mac RDP: Use Microsoft Remote Desktop"
         echo "=========================================="
         
         sleep 6h
