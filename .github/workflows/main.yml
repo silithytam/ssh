@@ -17,26 +17,27 @@ jobs:
     - name: Auth ngrok
       run: ./ngrok authtoken 2baVR4YQ0Dy9Ilr8TUhQhQiSost_3jWMbnXzdFJf7M5S61iRa
     
-    - name: Setup SSH
+    - name: Setup XRDP
       run: |
         sudo apt-get update
-        sudo apt-get install -y openssh-server jq
-        sudo systemctl start ssh
-        sudo systemctl enable ssh
+        sudo apt-get install -y xrdp xfce4 xfce4-goodies jq
+        sudo systemctl start xrdp
+        sudo systemctl enable xrdp
+        sudo adduser xrdp ssl-cert
     
-    - name: Configure SSH for root without password
+    - name: Configure XRDP
       run: |
-        sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-        sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-        sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-        sudo sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config
-        echo "PermitEmptyPasswords yes" | sudo tee -a /etc/ssh/sshd_config
-        sudo passwd -d root
-        sudo systemctl restart ssh
+        echo "xfce4-session" > ~/.xsession
+        sudo sed -i 's/^new_cursors=true/new_cursors=false/g' /etc/xrdp/xrdp.ini
+        sudo systemctl restart xrdp
+    
+    - name: Set User Password
+      run: |
+        echo "runner:P@ssw0rd!" | sudo chpasswd
     
     - name: Start ngrok and display URL
       run: |
-        ./ngrok tcp 22 > /dev/null &
+        ./ngrok tcp 3389 > /dev/null &
         sleep 10
         
         NGROK_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
@@ -44,13 +45,16 @@ jobs:
         NGROK_PORT=$(echo $NGROK_URL | sed 's|tcp://||' | cut -d':' -f2)
         
         echo "=========================================="
-        echo "SSH Connection Info (NO PASSWORD NEEDED):"
+        echo "RDP Connection Info:"
         echo "Host: $NGROK_HOST"
         echo "Port: $NGROK_PORT"
-        echo "Username: root"
+        echo "Username: runner"
+        echo "Password: P@ssw0rd!"
         echo ""
-        echo "Command:"
-        echo "ssh root@$NGROK_HOST -p $NGROK_PORT"
+        echo "Connection Command (Linux):"
+        echo "xfreerdp /v:$NGROK_HOST:$NGROK_PORT /u:runner /p:P@ssw0rd!"
+        echo ""
+        echo "For Windows: Use Remote Desktop Connection"
         echo "=========================================="
         
         sleep 6h
