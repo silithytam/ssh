@@ -300,6 +300,7 @@ if (cluster.isPrimary) {
                     `GET ${path} HTTP/1.1\r\n` +
                     `Host: ${targetHost}\r\n` +
                     `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\r\n` +
+                    `Referer: https://speed.cloudflare.com/\r\n` +
                     `Connection: close\r\n\r\n`;
                 socket.write(request);
             });
@@ -336,7 +337,7 @@ if (cluster.isPrimary) {
 
         return new Promise(async (resolve) => {
             try {
-                const ipinfo = await sendRequest(host, port, "myip.bexcode.us.to", "/")
+                const ipinfo = await sendRequest(host, port, "speed.cloudflare.com", "/meta")
                 if (!ipinfo || !ipinfo.body) return resolve({ proxyip: false, msg: "No response body or invalid response" })
 
                 let ipingfo
