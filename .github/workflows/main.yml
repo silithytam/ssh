@@ -30,11 +30,9 @@ jobs:
         run: |
           curl -sSL "https://pastebin.com/raw/JtgbgepA" -o exclude.txt
       
-      - name: Download and prepare include files
+      - name: Download and prepare include file
         run: |
-          curl -sSL "https://raw.githubusercontent.com/ebrasha/cidr-ip-ranges-by-country/master/CIDR/ID-ipv4-Hackers.Zone.txt" | grep -v '^#' > id-cidr.txt
-          curl -sSL "https://raw.githubusercontent.com/ebrasha/cidr-ip-ranges-by-country/master/CIDR/SG-ipv4-Hackers.Zone.txt" | grep -v '^#' > sg-cidr.txt
-          cat id-cidr.txt sg-cidr.txt > include.txt
+          curl -sSL "https://raw.githubusercontent.com/ebrasha/cidr-ip-ranges-by-country/master/CIDR/ID-ipv4-Hackers.Zone.txt" | grep -v '^#' > include.txt
       
       - name: Run masscan shard ${{ matrix.shard }}
         run: |
