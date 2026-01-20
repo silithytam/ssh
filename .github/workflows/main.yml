@@ -1,13 +1,44 @@
-name: CI
+name: scan
 
-on: [push, workflow_dispatch]
+on:
+  workflow_dispatch:
 
 jobs:
-  build:
-
+  scan:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+      max-parallel: 20
+      fail-fast: false
+    
     steps:
-    - name: Download ngrok
-      run: |
-        df -h
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install masscan
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y masscan
+      
+      - name: Run masscan shard ${{ matrix.shard }}
+        run: |
+          sudo masscan -p443,2053,2083,2087,2096,8443 0.0.0.0/0 \
+            --excludefile <(curl -sSL "https://pastebin.com/raw/JtgbgepA") \
+            --rate 30000 \
+            --seed 1000 \
+            --shard ${{ matrix.shard }}/20 \
+            | node check.js
+      
+      - name: Upload prxip.json
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prxip-shard-${{ matrix.shard }}
+          path: prxip.json
+          retention-days: 7
